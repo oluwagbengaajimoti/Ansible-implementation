@@ -1,6 +1,6 @@
 ---
 - name: update web, nfs and db servers
-  hosts: webservers, nfs, db-server
+  hosts: webservers, nfs, dbserver
   remote_user: ec2-user
   become: yes
   become_user: root
@@ -11,7 +11,7 @@
         state: latest
 
 - name: update LB server
-  hosts: lb-server
+  hosts: lbserver
   remote_user: ubuntu
   become: yes
   become_user: root
