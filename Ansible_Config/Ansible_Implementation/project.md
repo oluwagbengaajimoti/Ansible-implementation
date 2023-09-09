@@ -1,4 +1,5 @@
-## ANSIBLE CONFIGURATION MANAGEMENT – Ansible Automation Implementation
+## ANSIBLE CONFIGURATION MANAGEMENT
+### Ansible remote server configuration and Automation Implementation
 
 ![image](https://user-images.githubusercontent.com/116161693/233007313-6d3c10c0-7d01-49aa-b801-3e2ca0149358.png)
 
@@ -65,7 +66,7 @@ ssh-add <path-to-private-key>
 
 ![image](images/08.png)
 
-- Now, ssh into your Jenkins-Ansible server using ssh-agent: `ssh -A ubuntu@public-ip`
+- Now, ssh into your Jenkins-Ansible server using ssh-agent: `ssh -A <username>@public-ip`
 - Also notice, that your ubuntu user is ubuntu and user for RHEL-based servers is ec2-user.
 - Update your inventory/dev.yml file with this snippet of code:
 ```
@@ -131,8 +132,8 @@ git commit -m "commit message"
 #### Step 7 – Run Ansible test
 ansible-playbook -i/var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/playbooks/common.yml
 
-![image](11.png)
+![image](images/11.png)
 
 - If your command ran successfully, go to each of the servers and check if wireshark has been installed by running `which wireshark` or `wireshark --version`
   
-![image](12.png)
+![image](images/12.png)
