@@ -1,0 +1,9 @@
+---
+http_host: "your_domain"
+vg_name: "webdata-vg"
+lv_1: "webdata-lv"
+lv_2: "logs-lv"
+lv_1_size: "10GB"
+lv_2_size: "10GB"
+domain_name: "oluwagbengaajimoti.com.ng"
+nfs_ip: "10.10.10.139"
