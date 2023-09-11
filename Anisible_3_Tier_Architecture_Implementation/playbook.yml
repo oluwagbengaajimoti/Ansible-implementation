@@ -61,12 +61,14 @@
       ansible.builtin.file:
         path: /mnt/apps
         state: directory
+        owner: nobody
         mode: 0755
 
    - name: Creating mount directory inside Parent
      ansible.builtin.file:
        path: /mnt/logs
        state: directory
+       owner: nobody
        mode: 0755
 
     - name: Formating first LV
@@ -124,7 +126,7 @@
       with_items:
         - nsf-server.service
 
-- name: Setting up NFS client packages on webservers
+- name: Setting up NFS client and httpd webservers
   hosts: webservers
   remote_user: ec2-user
   become: yes
@@ -134,9 +136,9 @@
   tasks:
     - name: Create document root on webserver
       ansible.builtin.file:
-          path: /var/www/{{ domain_name }}
+          path: /var/www/html
           state: directory
-          owner: root
+          owner: apache
           mode: 0755
         
     - name: install nfs-utils
@@ -149,4 +151,46 @@
           state: latest
 
     - name: Mount volumn on document root
-      shell: sudo mount -t nfs -o rw,nosuid {{ nfs_ip }}:/mnt/apps /var/www/{{ domain_name }}
+      shell: sudo mount -t nfs -o rw,nosuid {{ nfs_ip }}:/mnt/apps /var/www/html
+
+  #implementation of webserver
+    - name: installation of LAMP-STACK packages, and their dependencies
+      package:
+        name: "{{ item }}"
+        state: latest
+      with_items:
+        - httpd
+        - mysql
+        - php
+        - php-json
+        - php-curl
+        - php-mysqlnd
+        - php-fpm
+        - php-opcache
+        - php-gd
+        
+    - name: Copy index test page
+      template:
+        src: "files/index.html.j2"
+        dest: "/var/www/html/index.html"
+        
+    - name: Setsebool
+      command: setsebool -P httpd_execmem 1
+
+    - name: Disabling the default welcoming page
+      command: sudo mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_backup
+      command: sudo setenforce 0
+
+    - name: Enable the httpd service
+      systemd:
+        name: httpd
+        enabled: yes
+      notify:
+        - Start httpd
+
+    - name: Start the httpd service
+      systemd:
+        name: httpd
+        state: started
+      ignore_errors: yes 
+# End of webserver
