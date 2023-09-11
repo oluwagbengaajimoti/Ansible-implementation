@@ -1,6 +1,6 @@
 ---
 - name: Setting up NFS server
-- hosts: nfs
+  hosts: nfs
   remote_user: ec2-user
   become: yes
   become_user: root
@@ -35,91 +35,72 @@
         part_end: 100%
 
     - name: Install lvm2 dependency
-        package:
-          name: lvm2
-          state: latest
+       yum: name=lvm2 state=latest
 
-    - name: Creating PV for disk 1
-      lvg:
-         pv: /dev/xvdf1
-         vg: "{{ vg_name }}"
+    - name: Creating PV for disk
+      command: sudo pvcreate /dev/xvdf1 /dev/xvdg1 /dev/xvdh1
 
-    - name: Creating PV for disk 2
-      lvg:
-          pv: /dev/xvdg1
-          vg: "{{ vg_name }}"
-
-    - name: Creating PV for disk 3
-      lvg:
-          pv: /dev/xvdh1
-          vg: "{{ vg_name }}"
+    - name: Creating VG for the disk 
+      command: sudo vgcreate "{{ vg_name }}" /dev/xvdf1 /dev/xvdg1 /dev/xvdh1 
 
     - name: Creating first logical volume
       lvol:
-          vg: "{{ vg_name }}"
-          lv: "{{ lv_1 }}"
-          size: "{{ lv_1_size }}"
-          force: yes
+         vg: "{{ vg_name }}"
+         lv: "{{ lv_1 }}"
+         size: "{{ lv_1_size }}"
+         force: yes
 
-    - name: Creating second logical volume
-      lvol:
-          vg: "{{ vg_name }}"
-          lv: "{{ lv_2 }}"
-          size: "{{ lv_2_size }}"
-          force: yes
+   - name: Creating second logical volume
+     lvol:
+        vg: "{{ vg_name }}"
+         lv: "{{ lv_2 }}"
+         size: "{{ lv_2_size }}"
+         force: yes
 
     - name: Creating mount directory inside Parent
       ansible.builtin.file:
         path: /mnt/apps
         state: directory
         mode: 0755
- 
-    - name: Creating mount directory inside Parent
-      ansible.builtin.file:
-        path: /mnt/logs
-        state: directory
-        mode: 0755
 
-    -name: Formating first LV
+   - name: Creating mount directory inside Parent
+     ansible.builtin.file:
+       path: /mnt/logs
+       state: directory
+       mode: 0755
+
+    - name: Formating first LV
       filesystem: 
         fstype: xfs
-        dev: /dev/"{{ vg_name }}"/"{{ lv_1_size }}"
+        dev: "/dev/{{ vg_name }}/{{ lv_1 }}"
 
-    -name: Formating second LV
+    - name: Formating second LV
       filesystem: 
         fstype: xfs
-        dev: /dev/"{{ vg_name }}"/"{{ lv_2_size }}"
+        dev: "/dev/{{ vg_name }}/{{ lv_2 }}"
 
-    -name: mounting first lv
+    - name: mounting first lv
       mount:
         path: /mnt/apps
-        src: /dev/"{{ vg_name }}"/"{{ lv_1_size }}"
+        src: "/dev/{{ vg_name }}/{{ lv_1 }}"
         fstype: xfs
         state: mounted
 
-    -name: mounting second lv
-      mount:  /mnt/logs
-        src: /dev/"{{ vg_name }}"/"{{ lv_2_size }}"
-        stype: xfs
-        tate: mounted
+    - name: mounting second lv
+      mount:
+        path: /mnt/logs
+        src: "/dev/{{ vg_name }}/{{ lv_2 }}"
+        fstype: xfs
+        state: mounted
 
-    - name: Network_File_System (NFS) Server Set Up
-        package:
+    - name: installing nfs utilit
+      package:
           name: nfs-utils
           state: latest 
 
-    - name: enable rpcbind nfslock nfs
-      service:
-        name: "{{ item }}"
-        enabled: yes
-      with_items:
-        - rpcbind
-        - nfslock
-        - nfs
-
     - name: Copy exports file.
       template:
-        src: ./filesexports.j2
+        src: ./files/exports.j2
         dest: /etc/exports
         owner: root
         group: root
@@ -128,8 +109,23 @@
     - name: NFS apply change configrue
       shell: systemctl reload nfs;exportfs -a
 
+    - name: enable rpcbind nfslock nfs
+      service:
+        name: "{{ item }}"
+        enabled: yes
+      with_items:
+        - rpcbind
+        - nsf-server.service
+
+    - name: enable rpcbind nfslock nfs
+      service:
+        name: "{{ item }}"
+        started: yes
+      with_items:
+        - nsf-server.service
+
 - name: Setting up NFS client packages on webservers
-- hosts: webservers
+  hosts: webservers
   remote_user: ec2-user
   become: yes
   become_user: root
@@ -137,16 +133,20 @@
     - vars/default.yml
   tasks:
     - name: Create document root on webserver
-        ansible.builtin.file:
+      ansible.builtin.file:
           path: /var/www/{{ domain_name }}
           state: directory
           owner: root
           mode: 0755
         
     - name: install nfs-utils
-        package: 
+      package: 
           name: nfs-utils
+          state: latest
+    - name: install nfs-utils
+      package: 
+          name: nfs4-acl-tools
           state: latest
 
     - name: Mount volumn on document root
-        shell: sudo mount {{ nfs_ip }}:/home/vagrant/nfs_test /mnt/apps
+      shell: sudo mount -t nfs -o rw,nosuid {{ nfs_ip }}:/mnt/apps /var/www/{{ domain_name }}
