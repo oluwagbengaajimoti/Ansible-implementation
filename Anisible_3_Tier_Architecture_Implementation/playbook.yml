@@ -34,8 +34,8 @@
         part_start: 0%
         part_end: 100%
 
-    - name: Installation of lvm2 dependency
-        ansible.builtin.yum: 
+    - name: Install lvm2 dependency
+        package:
           name: lvm2
           state: latest
 
@@ -104,7 +104,7 @@
         tate: mounted
 
     - name: Network_File_System (NFS) Server Set Up
-        ansible.builtin.yum:
+        package:
           name: nfs-utils
           state: latest 
 
@@ -143,7 +143,7 @@
           mode: 0755
         
     - name: install nfs-utils
-        ansible.builtin.yum:
+        package: 
           name: nfs-utils
           state: latest
 
