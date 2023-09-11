@@ -1,12 +1,12 @@
 ---
-- hosts: NFS-Server-Set-Up
+- name: Setting up NFS server
+- hosts: nfs
   remote_user: ec2-user
   become: yes
   become_user: root
   vars_files:
     - vars/default.yml
   tasks:
-    - name: 
     - name: partioning disk 1
       parted:
         device: /dev/xvdf
@@ -128,6 +128,7 @@
     - name: NFS apply change configrue
       shell: systemctl reload nfs;exportfs -a
 
+- name: Setting up NFS client packages on webservers
 - hosts: webservers
   remote_user: ec2-user
   become: yes
