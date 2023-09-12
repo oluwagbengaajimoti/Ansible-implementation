@@ -54,8 +54,8 @@
       lvol:
         vg: "{{ vg_name }}"
         lv: "{{ lv_2 }}"
-         size: "{{ lv_2_size }}"
-         force: yes
+        size: "{{ lv_2_size }}"
+        force: yes
 
     - name: Creating mount directory inside Parent
       ansible.builtin.file:
@@ -66,10 +66,10 @@
 
     - name: Creating mount directory inside Parent
       ansible.builtin.file:
-       path: /mnt/logs
-       state: directory
-       owner: nobody
-       mode: 0755
+        path: /mnt/logs
+        tate: directory
+        owner: nobody
+        mode: 0755
 
     - name: Formating first LV
       filesystem: 
@@ -97,8 +97,8 @@
 
     - name: installing nfs utilit
       package:
-          name: nfs-utils
-          state: latest 
+        name: nfs-utils
+        state: latest 
 
     - name: Copy exports file.
       template:
@@ -136,19 +136,19 @@
   tasks:
     - name: Create document root on webserver
       ansible.builtin.file:
-          path: /var/www/html
-          state: directory
-          owner: apache
-          mode: 0755
+        path: /var/www/html
+        state: directory
+        owner: apache
+        mode: 0755
         
     - name: install nfs-utils
       package: 
-          name: nfs-utils
-          state: latest
+        name: nfs-utils
+        state: latest
     - name: install nfs-utils
       package: 
-          name: nfs4-acl-tools
-          state: latest
+        name: nfs4-acl-tools
+        state: latest
 
     - name: Mount volumn on document root
       shell: sudo mount -t nfs -o rw,nosuid {{ nfs_ip }}:/mnt/apps /var/www/html
