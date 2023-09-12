@@ -35,7 +35,7 @@
         part_end: 100%
 
     - name: Install lvm2 dependency
-       yum: name=lvm2 state=latest
+      yum: name=lvm2 state=latest
 
     - name: Creating PV for disk
       command: sudo pvcreate /dev/xvdf1 /dev/xvdg1 /dev/xvdh1
