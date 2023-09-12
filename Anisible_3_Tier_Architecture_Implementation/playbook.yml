@@ -50,7 +50,7 @@
          size: "{{ lv_1_size }}"
          force: yes
 
-   - name: Creating second logical volume
+    - name: Creating second logical volume
      lvol:
         vg: "{{ vg_name }}"
          lv: "{{ lv_2 }}"
