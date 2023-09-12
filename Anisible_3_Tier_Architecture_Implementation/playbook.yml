@@ -51,7 +51,7 @@
          force: yes
 
     - name: Creating second logical volume
-     lvol:
+      lvol:
         vg: "{{ vg_name }}"
          lv: "{{ lv_2 }}"
          size: "{{ lv_2_size }}"
@@ -64,8 +64,8 @@
         owner: nobody
         mode: 0755
 
-   - name: Creating mount directory inside Parent
-     ansible.builtin.file:
+    - name: Creating mount directory inside Parent
+      ansible.builtin.file:
        path: /mnt/logs
        state: directory
        owner: nobody
