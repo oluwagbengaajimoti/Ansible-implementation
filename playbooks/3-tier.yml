@@ -1,0 +1,4 @@
+---
+  - hosts: nsf
+  - name: Network File Storage (Server) Set Up
+    import_playbook: ../static-assignments/nfs-server.yml

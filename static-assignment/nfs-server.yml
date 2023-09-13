@@ -1,0 +1,5 @@
+---
+- hosts: nfs
+  become: true
+  roles:
+     - nfs_server

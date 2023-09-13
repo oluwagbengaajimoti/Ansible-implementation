@@ -1,6 +1,0 @@
----
-- hosts: all
-- import_playbook: playbooks/nfs_server.yml
-- import_playbook: playbooks/nfs_client.yml
-- import_playbook: playbooks/lamp.yml
-- import_playbook: playbooks/db.yml

@@ -1,0 +1,8 @@
+---
+vg_name: "webdata-vg"
+lv_1: "webdata-lv"
+lv_2: "logs-lv"
+lv_1_size: "10G"
+lv_2_size: "10G"
+webdata_mount_dir: "/mnt/apps"
+logs_mount_dir: "/mnt/logs"
