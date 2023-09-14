@@ -1,0 +1,6 @@
+---
+apache_document_root: html
+app_user: apache
+http_conf_name: newsite.conf
+http_port:80
+domain_name: newsite.com

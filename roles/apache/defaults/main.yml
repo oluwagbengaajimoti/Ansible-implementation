@@ -1,0 +1,6 @@
+---
+http_port: 80
+domain_name: newsite.com
+serveradmin: webmaster@newsite.com
+apache_document_root: html
+disable_default: true

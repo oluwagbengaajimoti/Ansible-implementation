@@ -1,0 +1,4 @@
+---
+http_conf_name: newsite.com.conf
+domain_name: newsit.com
+http_port: 80

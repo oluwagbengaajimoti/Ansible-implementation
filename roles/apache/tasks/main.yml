@@ -1,49 +1,50 @@
 ---
-- name: Setting up NFS client and httpd webservers
-  hosts: webservers
-  remote_user: ec2-user
-  become: yes
-  become_user: root
-  vars_files:
-    - ../vars/default.yml
-  tasks:
-    - name: installation of LAMP-STACK packages, and their dependencies
-      package:
-        name: "{{ item }}"
-        state: latest
-      with_items:
-        - httpd
-        - mysql
-        - php
-        - php-json
-        - php-curl
-        - php-mysqlnd
-        - php-fpm
-        - php-opcache
-        - php-gd
+    - name: Update APT package cache 
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist 
         
-    - name: Copy index test page
+    - name: Install Apache Packages
+      apt: name={{ item }} update_cache=yes state=latest
+      loop: [ 'apache', 'php', 'libapache2-mod-php', 'php-mysql', 'php-curl', 'php-json' ]
+
+    - name: Create document root
+      file:
+        path: "/var/www/{{ apache_document_root }}"
+        state: directory
+        owner: "{{ app_user }}"
+        mode: '0755'
+
+    - name: Set up Apache virtualhost
       template:
-        src: "files/index.html.j2"
-        dest: "/var/www/html/index.html"
-        
-    - name: Setsebool
-      command: setsebool -P httpd_execmem 1
+        src: "apache.conf.j2"
+        dest: "/etc/apache2/sites-available/{{ http_conf_name }}"
 
-    - name: Disabling the default welcoming page
-      command: sudo mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_backup
-      command: sudo setenforce 0
+    - name: Enable new site
+      shell: /usr/sbin/a2ensite {{ http_conf_name }}
+      notify: Reload Apache
 
-    - name: Enable the httpd service
-      systemd:
-        name: httpd
-        enabled: yes
-      notify:
-        - Start httpd
+    - name: Disable default Apache site
+      shell: /usr/sbin/a2dissite 000-default.conf
+      when: disable_default
+      notify: Reload Apache
 
-    - name: Start the httpd service
-      systemd:
-        name: httpd
-        state: started
-      ignore_errors: yes 
-# End of webserver
+    - name: "UFW - Allow HTTP on port {{ http_port }}"
+      ufw:
+        rule: allow
+        port: "{{ http_port }}"
+        proto: tcp
+
+  handlers:
+    - name: Reload Apache
+      service:
+        name: apache2
+        state: reloaded
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted

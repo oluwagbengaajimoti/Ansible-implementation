@@ -1,23 +1,45 @@
 ---
-# tasks file for nginx
-- name: install nginx on the webserver
-  ansible.builtin.yum:
-      name: nginx
-      state: present
+    - name: Install Prerequisites
+      apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
+      loop: [ 'aptitude' ]
 
-
-- name: ensure nginx is started and enabled
-  ansible.builtin.service:
-     name: nginx
-     state: started 
-     enabled: yes
-
-- name: install PHP
-  ansible.builtin.yum:
-    name:
-      - php 
-      - php-mysqlnd
-      - php-gd 
-      - php-curl
-    state: present
+    - name: Install LEMP Packages
+      apt: name={{ item }} update_cache=yes state=latest
+      loop: [ 'nginx', 'php-fpm', 'php-mysql', 'php-curl', 'php-json' ]
     
+# Nginx Configuration
+    - name: Sets Nginx conf file
+      template:
+        src: nginx.conf.j2
+        dest: "/etc/nginx/sites-available/{{ http_conf_name }}"
+
+    - name: Enables new site
+      file:
+        src: "/etc/nginx/sites-available/{{ http_conf_name }}"
+        dest: "/etc/nginx/sites-enabled/{{ http_conf_name }}"
+        state: link
+      notify: Reload Nginx
+    
+    - name: Removes "default" site
+      file:
+        path: "/etc/nginx/sites-enabled/default"
+        state: absent
+      notify: Reload Nginx
+
+# UFW Configuration
+    - name: "UFW - Allow HTTP on port {{ http_port }}"
+      ufw:
+        rule: allow
+        port: "{{ http_port }}"
+        proto: tcp
+
+  handlers:
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted    
