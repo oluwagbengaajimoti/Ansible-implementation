@@ -1,17 +1,21 @@
 ---
     - name: Update APT package cache 
+      become: yes
       apt:
         update_cache: yes
 
     - name: Upgrade all packages
+      become: yes
       apt:
         upgrade: dist 
         
     - name: Install Apache Packages
+      become: yes
       apt: name={{ item }} update_cache=yes state=latest
-      loop: [ 'apache', 'php', 'libapache2-mod-php', 'php-mysql', 'php-curl', 'php-json' ]
+      loop: [ 'apache2', 'php', 'libapache2-mod-php', 'php-mysql', 'php-curl', 'php-json' ]
 
     - name: Create document root
+      become: yes
       file:
         path: "/var/www/{{ apache_document_root }}"
         state: directory
@@ -19,20 +23,24 @@
         mode: '0755'
 
     - name: Set up Apache virtualhost
+      become: yes
       template:
         src: "apache.conf.j2"
         dest: "/etc/apache2/sites-available/{{ http_conf_name }}"
 
     - name: Enable new site
+      become: yes
       shell: /usr/sbin/a2ensite {{ http_conf_name }}
       notify: Reload Apache
 
     - name: Disable default Apache site
+      become: yes
       shell: /usr/sbin/a2dissite 000-default.conf
       when: disable_default
       notify: Reload Apache
 
     - name: "UFW - Allow HTTP on port {{ http_port }}"
+      become: yes
       ufw:
         rule: allow
         port: "{{ http_port }}"
@@ -40,11 +48,13 @@
 
   handlers:
     - name: Reload Apache
+      become: yes
       service:
         name: apache2
         state: reloaded
 
     - name: Restart Apache
+      become: yes
       service:
         name: apache2
         state: restarted

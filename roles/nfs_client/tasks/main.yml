@@ -1,13 +1,6 @@
 ---
-- name: Setting up NFS client and httpd webservers
-  hosts: webservers
-  remote_user: ec2-user
-  become: yes
-  become_user: root
-  vars_files:
-    - ../vars/default.yml
-  tasks:
     - name: Create document root on webserver
+      become: yes
       ansible.builtin.file:
         path: /var/www/html
         state: directory
@@ -15,13 +8,30 @@
         mode: 0755
         
     - name: install nfs-utils
+      become: yes
       package: 
         name: nfs-utils
         state: latest
-    - name: install nfs-utils
+
+    - name: nfs4-acl-tools
+      become: yes
       package: 
         name: nfs4-acl-tools
         state: latest
 
     - name: Mount volumn on document root
-      shell: sudo mount -t nfs -o rw,nosuid {{ nfs_ip }}:/mnt/apps /var/www/html
+      become: yes
+      shell: mount -t nfs -o rw,nosuid {{ nfs_ip }}:{{ nsf_server_mounted_point }} {{ nsf_client_mount_dir }}
+
+  handlers:
+    - name: Reload nsf-server
+      become: yes
+      service:
+        name: nsf-server
+        state: reloaded
+
+    - name: Restart nsf-server
+      become: yes
+      service:
+        name: nsf-server
+        state: restarted

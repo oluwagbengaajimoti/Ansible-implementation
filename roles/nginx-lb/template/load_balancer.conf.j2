@@ -1,0 +1,18 @@
+upstream web_server {
+    server {{ first_web_server_ip }};
+    server {{ second_web_server_ip }};
+    server {{ third_web_server_ip }};
+
+}
+
+server {
+        listen {{ http_port }};
+
+        server_name {{ domain_name }} www.{{ domain_name }};
+
+        location / {
+
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_pass http://web_server;
+        }
+}

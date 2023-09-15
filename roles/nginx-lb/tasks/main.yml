@@ -1,0 +1,65 @@
+---
+    - name: Update APT package cache 
+      become: yes
+      apt:
+        update_cache: yes
+
+    - name: Upgrade all packages
+      become: yes
+      apt:
+        upgrade: dist 
+        
+    - name: Install Packages for apache load balancing
+      become: yes
+      apt: name={{ item }} update_cache=yes state=latest
+      loop: [ 'nginx' ]
+
+    - name: Enable Nginx service at boot
+      become: yes
+      ansible.builtin.service:
+        name: nginx
+        enabled: yes
+
+    - name: Start Nginx service
+      become: yes
+      ansible.builtin.service:
+        name: nginx
+        state: started
+
+    - name: Set up Apache load-balancer configuration
+      become: yes
+      template:
+        src: "load_balancer.conf.j2"
+        dest: "/etc/nginx/sites-available/{{ load_balancer_conf_name }}"
+
+    - name: Removing default configuration
+      become: yes
+      command: "rm -f /etc/nginx/sites-enabled/default"
+
+    - name: Adding Custom configuration to sites-enabled
+      become: yes
+      command:  "ln -s /etc/nginx/ites-available/{{ load_balancer_conf_name }} /etc/nginx/sites-enabled"
+
+  handlers:
+    - name: Reload nginx
+      become: yes
+      service:
+        name: nginx
+        state: reloaded
+
+    - name: Restart nginx
+      become: yes
+      service:
+        name: nginx
+        state: restarted
+
+
+
+
+
+
+
+
+
+
+

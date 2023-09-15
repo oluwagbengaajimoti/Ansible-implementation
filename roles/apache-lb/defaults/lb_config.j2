@@ -1,0 +1,22 @@
+<VirtualHost *:{{ http_port }}>
+    
+    ServerAdmin webmaster@localhost
+    DocumentRoot /var/www/html
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+    <Proxy "balancer://mycluster">
+        BalancerMember http://{{ first_web_server_ip }}:{{ http_port }} loadfactor=5 timeout=1
+        BalancerMember http://{{ second_web_server_ip }}:{{ http_port }} loadfactor=5 timeout=1
+        BalancerMember http://{{ third_web_server_ip }}:{{ http_port }} loadfactor=5 timeout=1
+        ProxySet lbmethod=bytraffic
+        #Proxy lbmethod=byrequests
+    </Proxy>
+
+    ProxyPreserveHost On
+    ProxyPass / balancer://mycluster/
+    ProxyPassReverse / balancer://mycluster/
+
+
+</VirtualHost>

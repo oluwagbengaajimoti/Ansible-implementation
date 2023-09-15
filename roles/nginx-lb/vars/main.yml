@@ -1,0 +1,6 @@
+first_web_server_ip: 10.10.10.138
+second_web_server_ip: 10.10.10.136
+third_web_server_ip: 10.10.10.132
+http_port: 80
+domain_name: newsite.com
+load_balancer_conf_name: load_balancer.conf

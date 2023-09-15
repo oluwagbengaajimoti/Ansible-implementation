@@ -1,3 +1,5 @@
 ---
 domain_name: "oluwagbengaajimoti.com.ng"
 nfs_ip: "10.10.10.7"
+nsf_server_mounted_point: /mnt/apps
+nsf_client_mount_dir: /var/www/html

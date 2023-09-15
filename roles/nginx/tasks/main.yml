@@ -1,19 +1,23 @@
 ---
     - name: Install Prerequisites
+      become: yes
       apt: name={{ item }} update_cache=yes state=latest force_apt_get=yes
       loop: [ 'aptitude' ]
 
     - name: Install LEMP Packages
+      become: yes
       apt: name={{ item }} update_cache=yes state=latest
       loop: [ 'nginx', 'php-fpm', 'php-mysql', 'php-curl', 'php-json' ]
     
 # Nginx Configuration
     - name: Sets Nginx conf file
+      become: yes
       template:
         src: nginx.conf.j2
         dest: "/etc/nginx/sites-available/{{ http_conf_name }}"
 
     - name: Enables new site
+      become: yes
       file:
         src: "/etc/nginx/sites-available/{{ http_conf_name }}"
         dest: "/etc/nginx/sites-enabled/{{ http_conf_name }}"
@@ -21,6 +25,7 @@
       notify: Reload Nginx
     
     - name: Removes "default" site
+      become: yes
       file:
         path: "/etc/nginx/sites-enabled/default"
         state: absent
@@ -28,6 +33,7 @@
 
 # UFW Configuration
     - name: "UFW - Allow HTTP on port {{ http_port }}"
+      become: yes
       ufw:
         rule: allow
         port: "{{ http_port }}"
@@ -35,11 +41,13 @@
 
   handlers:
     - name: Reload Nginx
+      become: yes
       service:
         name: nginx
         state: reloaded
 
     - name: Restart Nginx
+      become: yes
       service:
         name: nginx
         state: restarted    

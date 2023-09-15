@@ -1,13 +1,6 @@
 ---
-- name: Setting up NFS client and httpd webservers
-  hosts: webservers
-  remote_user: ec2-user
-  become: yes
-  become_user: root
-  vars_files:
-    - ../vars/default.yml
-  tasks:
     - name: installation of LAMP-STACK packages, and their dependencies
+      become: yes
       package:
         name: "{{ item }}"
         state: latest
@@ -22,19 +15,20 @@
         - php-opcache
         - php-gd
         
-    - name: Copy index test page
-      template:
-        src: "files/index.html.j2"
-        dest: "/var/www/html/index.html"
-        
     - name: Setsebool
+      become: yes
       command: setsebool -P httpd_execmem 1
 
     - name: Disabling the default welcoming page
-      command: sudo mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_backup
-      command: sudo setenforce 0
+      become: yes
+      command: mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf_backup
+
+    - name: Setsebool
+      become: yes
+      command: setenforce 0
 
     - name: Enable the httpd service
+      become: yes
       systemd:
         name: httpd
         enabled: yes
@@ -42,8 +36,8 @@
         - Start httpd
 
     - name: Start the httpd service
+      become: yes
       systemd:
         name: httpd
         state: started
       ignore_errors: yes 
-# End of webserver

@@ -1,6 +1,7 @@
 ---
 # tasks for deployment of nfs server
     - name: partioning disk 1
+      become: yes
       parted:
         device: /dev/xvdf
         number: 1
@@ -10,6 +11,7 @@
         part_end: 100%
 
     - name: partioning disk 2
+      become: yes
       parted:
         device: /dev/xvdg
         number: 1
@@ -19,6 +21,7 @@
         part_end: 100%
 
     - name: partioning disk 3
+      become: yes
       parted:
         device: /dev/xvdh
         number: 1
@@ -28,17 +31,21 @@
         part_end: 100%
 
     - name: Install lvm2 dependency
+      become: yes
       package:
         name: lvm2
         state: latest
 
     - name: Creating PV for disk
-      command: sudo pvcreate /dev/xvdf1 /dev/xvdg1 /dev/xvdh1
+      become: yes
+      command: pvcreate /dev/xvdf1 /dev/xvdg1 /dev/xvdh1
 
     - name: Creating VG for the disk 
-      command: sudo vgcreate "{{ vg_name }}" /dev/xvdf1 /dev/xvdg1 /dev/xvdh1 
+      become: yes
+      command: vgcreate "{{ vg_name }}" /dev/xvdf1 /dev/xvdg1 /dev/xvdh1 
 
     - name: Creating first logical volume
+      become: yes
       lvol:
          vg: "{{ vg_name }}"
          lv: "{{ lv_1 }}"
@@ -46,6 +53,7 @@
          force: yes
 
     - name: Creating second logical volume
+      become: yes
       lvol:
         vg: "{{ vg_name }}"
         lv: "{{ lv_2 }}"
@@ -53,6 +61,7 @@
         force: yes
 
     - name: Creating mount directory inside Parent
+      become: yes
       ansible.builtin.file:
         path: "{{ webdata_mount_dir }}"
         state: directory
@@ -60,6 +69,7 @@
         mode: 0755
 
     - name: Creating mount directory inside Parent
+      become: yes
       ansible.builtin.file:
         path: "{{ logs_mount_dir }}"
         tate: directory
@@ -67,16 +77,19 @@
         mode: 0755
 
     - name: Formating first LV
+      become: yes
       filesystem: 
         fstype: xfs
         dev: "/dev/{{ vg_name }}/{{ lv_1 }}"
 
     - name: Formating second LV
+      become: yes
       filesystem: 
         fstype: xfs
         dev: "/dev/{{ vg_name }}/{{ lv_2 }}"
 
     - name: mounting first lv
+      become: yes
       mount:
         path: /mnt/apps
         src: "/dev/{{ vg_name }}/{{ lv_1 }}"
@@ -84,6 +97,7 @@
         state: mounted
 
     - name: mounting second lv
+      become: yes
       mount:
         path: /mnt/logs
         src: "/dev/{{ vg_name }}/{{ lv_2 }}"
@@ -91,11 +105,13 @@
         state: mounted
 
     - name: installing nfs utilit
+      become: yes
       package:
         name: nfs-utils
         state: latest 
 
     - name: Copy exports file.
+      become: yes
       template:
         src: exports.j2
         dest: /etc/exports
@@ -104,17 +120,26 @@
         mode: 0644
 
     - name: NFS apply change configrue
+      become: yes
       shell: systemctl reload nfs;exportfs -a
 
     - name: enable rpcbind nfslock nfs
+      become: yes
       service:
         name: "{{ item }}"
         enabled: true
       with_items:
         - rpcbind
 
-    - name: starting and enabling nsf server
+  handlers:
+    - name: Reload nsf-server
+      become: yes
       service:
         name: nsf-server
-        state: started
-        enabled: true
+        state: reloaded
+
+    - name: Restart nsf-server
+      become: yes
+      service:
+        name: nsf-server
+        state: restarted
