@@ -1,0 +1,139 @@
+## ANSIBLE CONFIGURATION MANAGEMENT
+### Ansible remote server configuration and Automation Implementation
+
+![image](https://user-images.githubusercontent.com/116161693/233007313-6d3c10c0-7d01-49aa-b801-3e2ca0149358.png)
+
+In this project, we will be implementing the below task:
+- Install and configure Ansible client to act as a Jump Server/Bastion Host
+- Create a simple Ansible playbook to automate servers configuration
+
+### Install and configure Ansible client to act as a Jump Server/Bastion Host
+
+An SSH jump server is a regular Linux server, accessible from the Internet, which is used as a gateway to access other Linux machines on a private network using the SSH protocol. Sometimes an SSH jump server is also called a “jump host” or a “bastion host”. The purpose of an SSH jump server is to be the only gateway for access to your infrastructure reducing the size of any potential attack surface.
+
+#### INSTALL AND CONFIGURE ANSIBLE ON EC2 INSTANCE
+This is a continuation of [Continuous-Integration-Pipeline-With-Jenkins](https://github.com/Gshare-dev/Continuous-Integration-Pipeline-With-Jenkins.git), update Name tag on your Jenkins EC2 Instance to **Jenkins-Ansible**. This server will be used to run playbooks.
+In your GitHub account create a new repository and name it **ansible-config**.
+In your **Jenkin-Ansible** server, install **Ansible**
+```
+sudo apt update
+sudo apt install ansible
+```
+Check your Ansible version by running `ansible --version`
+
+![image](images/01.png)
+
+Configure Jenkins build job to save your repository content every time you change it. See [Continuous-Integration-Pipeline-With-Jenkins](https://github.com/Gshare-dev/Continuous-Integration-Pipeline-With-Jenkins.git) for detailed steps
+- Create a new Freestyle project ansible in Jenkins and point it to your **ansible-config** repository.
+- Configure Webhook in GitHub and set webhook to trigger ansible build.
+
+  ![image](images/02.png)
+  Jenkins-Ansible-Project
+
+- Configure a Post-build job to save all (**) files. 
+- Test your setup by making some change in README.MD file in master branch and make sure that builds starts automatically and Jenkins saves the files (build artifacts) in following folder `ls /var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/`
+    
+  ![image](images/03.png)
+
+    
+##### PREPARE YOUR DEVELOPMENT ENVIRONMENT USING VISUAL STUDIO CODE
+- Install Visual Studio Code (VSC)- an Integrated development environment (IDE) or Source-code Editor. You can get it [here](https://code.visualstudio.com/download)
+- After you have successfully installed VSC, configure it to connect to your newly created GitHub repository.
+
+#### CREATE A SIMPLE ANSIBLE PLAYBOOK TO AUTOMATE SERVERS CONFIGURATION
+
+#### ANSIBLE DEVELOPMENT
+- In your **ansible-config** GitHub repository, create a new branch that will be used for development of a new feature.
+- Checkout the newly created feature branch to your local machine and start building your code and directory structure
+- Create a playbooks directory for storing playbooks
+- Create an inventory directory for storing inventory files
+- In the playbooks folder, create a common.yml file
+- In the inventory folder, create dev.yml, prod.yml, staging.yml and uat.yml for dev, prod, staging and uat environments respectively.
+
+![image](images/07.png)
+
+#### Setting up Ansible Inventory
+- An Ansible inventory file defines the hosts and groups of hosts upon which commands, modules, and tasks in a playbook operate. Since the intention is to execute Linux commands on remote hosts, and ensure that it is the intended configuration on a particular server that occurs. It is important to have a way to organize our hosts in such an Inventory.
+
+- Save below inventory structure in the inventory/dev file to start configuring your development servers. Ensure to replace the IP addresses according to your own setup.
+- Ansible uses TCP port 22 by default, which means it needs to ssh into target servers from Jenkins-Ansible host – for this you can implement the concept of ssh-agent. Now you need to import your key into ssh-agent: 
+
+```
+eval $(ssh-agent -s)
+ssh-add <path-to-private-key>
+```
+- Confirm the key has been added with this command, you should see the name of your key: `ssh-add -l`
+
+![image](images/08.png)
+
+- Now, ssh into your Jenkins-Ansible server using ssh-agent: `ssh -A <username>@public-ip`
+- Also notice, that your ubuntu user is ubuntu and user for RHEL-based servers is ec2-user.
+- Update your inventory/dev.yml file with this snippet of code:
+```
+[nfs]
+<NFS-Server-Private-IP-Address> ansible_ssh_user='ec2-user'
+
+[webservers]
+<Web-Server1-Private-IP-Address> ansible_ssh_user='ec2-user'
+<Web-Server2-Private-IP-Address> ansible_ssh_user='ec2-user'
+
+[db]
+<Database-Private-IP-Address> ansible_ssh_user='ubuntu' 
+
+[lb]
+<Load-Balancer-Private-IP-Address> ansible_ssh_user='ubuntu'
+```
+![image](images/09.png)
+
+#### Creating a Common Playbook
+Now we give Ansible the instructions on what you needs to be performed on all servers listed in **inventory/dev**. In **common.yml** playbook you will write configuration for repeatable, re-usable, and multi-machine tasks that is common to systems within the infrastructure.
+- Update your playbooks/common.yml file with following code:
+```
+---
+- name: update web, nfs and db servers
+  hosts: webservers, nfs, db
+  remote_user: ec2-user
+  become: yes
+  become_user: root
+  tasks:
+    - name: ensure wireshark is at the latest version
+      yum:
+        name: wireshark
+        state: latest
+
+- name: update LB server
+  hosts: lb
+  remote_user: ubuntu
+  become: yes
+  become_user: root
+  tasks:
+    - name: ensure wireshark is at the latest version
+      apt:
+        name: wireshark
+        state: latest
+```
+![image](images/04.png)
+
+2. This playbook is divided into two parts, each of them is intended to perform the same task: install **wireshark utility** (or make sure it is updated to the latest version) on your RHEL 8 and Ubuntu servers. It uses **root** user to perform this task and respective package manager: **yum** for RHEL 8 and **apt** for Ubuntu.
+
+**Updating GIT with the latest code**
+- Our directories and files is stored in our machine and we need to push changes made locally to GitHub.
+
+```
+git status
+git add <selected files>
+git commit -m "commit message"
+```
+- Create a Pull request (PR)
+- Once your code changes appear in master branch – Jenkins will do its job and save all the files (build artifacts) to **/var/lib/jenkins/jobs/ansible/builds/<build_number>/archive/** directory on Jenkins-Ansible server.
+
+![image](images/05.png)
+
+#### Step 7 – Run Ansible test
+ansible-playbook -i/var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/inventory/dev.yml /var/lib/jenkins/jobs/ansible/builds/<build-number>/archive/playbooks/common.yml
+
+![image](images/11.png)
+
+- If your command ran successfully, go to each of the servers and check if wireshark has been installed by running `which wireshark` or `wireshark --version`
+  
+![image](images/12.png)
