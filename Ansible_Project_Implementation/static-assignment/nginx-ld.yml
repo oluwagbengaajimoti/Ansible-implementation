@@ -1,0 +1,5 @@
+---
+- hosts: lbserver
+  become: true
+  roles:
+     - nginx-lb

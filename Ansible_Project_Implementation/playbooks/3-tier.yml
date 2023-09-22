@@ -2,3 +2,19 @@
   - hosts: nsf
   - name: Network File Storage (Server) Set Up
     import_playbook: ../static-assignments/nfs-server.yml
+
+  - hosts: webservers
+  - name: Network File Storage (Client) Set Up
+    import_playbook: ../static-assignments/nfs-client.yml
+
+  - hosts: webservers
+  - name: Web Server Set Up
+    import_playbook: ../static-assignments/apache.yml
+
+  - hosts: dbservers
+  - name: Database Server Set Up
+    import_playbook: ../static-assignments/mysql.yml
+
+  - hosts: lbservers
+  - name: Load-Balancer Server Set Up
+    import_playbook: ../static-assignments/apache-lb.yml

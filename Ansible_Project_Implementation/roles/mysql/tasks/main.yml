@@ -1,22 +1,42 @@
 ---
-# MySQL Configuration
-    - name: Sets the root password 
-      mysql_user: 
-        name: root 
-        password: "{{ mysql_root_password }}"
-        login_unix_socket: /var/run/mysqld/mysqld.sock
+# MySQL Configuration On Ubuntu Server
+  - name: Update APT package cache 
+    become: yes
+    apt:
+    update_cache: yes
 
-    - name: Removes all anonymous user accounts
-      mysql_user:
-        name: ''
-        host_all: yes
-        state: absent
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+  - name: Upgrade all packages
+    become: yes
+    apt:
+    upgrade: dist 
+        
+  - name: Install Apache Packages
+    become: yes
+    apt: name={{ item }} update_cache=yes state=latest
+    loop: [ 'mysql-server', 'php-mysql' ]
 
-    - name: Removes the MySQL test database
-      mysql_db: 
-        name: test 
-        state: absent
-        login_user: root
-        login_password: "{{ mysql_root_password }}"
+  - name: Start MYSQL Service
+    become: yes
+    service: 
+      name: mysql
+      state: restarted
+      
+  - name: create new database
+    become: yes
+    mysql_db: 
+      name: "{{ mysql_db_name }}"
+      state: present
+
+  - name: create new MYSQL user
+    become: yes
+    mysql_user: 
+      name=: "{{ mysql_user_name }}"
+      password: "{{ mysql_password_name}}"
+      priv: "{{ mysql_db_name }}.*:ALL"
+      state: present
+
+  - name: Restart MYSQL Service
+    become: yes
+    service: 
+      name: mysql
+      state: restarted
