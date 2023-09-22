@@ -13,7 +13,7 @@
 
   - hosts: dbservers
   - name: Database Server Set Up
-    import_playbook: ../static-assignments/mysql.yml
+    import_playbook: ../static-assignments/mysql_server.yml
 
   - hosts: lbservers
   - name: Load-Balancer Server Set Up

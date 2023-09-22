@@ -35,6 +35,13 @@
       priv: "{{ mysql_db_name }}.*:ALL"
       state: present
 
+  - name: Set up Apache load-balancer configuration
+    become: yes
+    template:
+      src: "mysqld.cnf.j2"
+      dest: "/etc/mysql/mysql.conf.d/mysqld.cnf
+"
+
   - name: Restart MYSQL Service
     become: yes
     service: 
